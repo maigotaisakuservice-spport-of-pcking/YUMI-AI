@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YUMI Studio - Interactive Environment</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- COOP/COEP for WebContainers -->
+    <script src="js/coi-serviceworker.js"></script>
+</head>
+<body class="studio-body">
+    <div class="studio-container">
+        <!-- Left Pane: Chat & Status -->
+        <aside class="left-pane">
+            <div class="system-status">
+                <span class="status-indicator online"></span>
+                <span class="status-text">YUMI 7.0 Online</span>
+            </div>
+            <div id="chat-history" class="chat-history">
+                <div class="message yumi">こんにちは。私はYUMIです。どのような創造をお手伝いしましょうか？</div>
+            </div>
+            <div class="chat-input-area">
+                <textarea id="chat-input" placeholder="メッセージを入力..."></textarea>
+                <button id="send-btn">Send</button>
+            </div>
+        </aside>
+
+        <!-- Right Pane: Dynamic Workspace -->
+        <main class="right-pane">
+            <div class="mode-tabs">
+                <button class="tab-btn active" data-mode="CHAT">Chat</button>
+                <button class="tab-btn" data-mode="STUDIO-DEV">Dev-Studio</button>
+                <button class="tab-btn" data-mode="STUDIO-MEDIA">Media-Studio</button>
+            </div>
+            <div id="workspace" class="workspace-content">
+                <div id="status-display">Ready for action.</div>
+                <!-- Monaco Editor or Video Preview will be injected here -->
+            </div>
+        </main>
+
+        <!-- Bottom Bar: Evolution Monitor -->
+        <footer class="bottom-bar">
+            <div class="memory-monitor">
+                <span>Memory Queue: <span id="queue-count">0</span></span>
+                <span class="separator">|</span>
+                <span>Next Evolution: <span id="countdown">Calculating...</span></span>
+            </div>
+            <div class="vram-monitor">
+                <span>VRAM: <span id="vram-usage">0</span> / 10 GB</span>
+            </div>
+        </footer>
+    </div>
+    <script src="js/main.js"></script>
+    <script type="module" src="js/ChatAgent.js"></script>
+    <script type="module" src="js/DynamicLoader.js"></script>
+</body>
+</html>
