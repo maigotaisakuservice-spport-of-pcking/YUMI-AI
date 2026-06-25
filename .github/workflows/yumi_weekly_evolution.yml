@@ -27,6 +27,8 @@ jobs:
           # llama.cpp等のビルドが必要な場合はここで実行
 
       - name: Data Collection & Cleaning
+        env:
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
         run: |
           python src/data/rss_parser.py --data '${{ github.event.inputs.memory_data }}'
           # cleanerを実行して学習データを準備

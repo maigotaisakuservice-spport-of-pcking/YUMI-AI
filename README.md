@@ -76,7 +76,9 @@ yumi-1t-os/
 4. エキスパートモデル（10GB GGUF）を100個アップロードします。
 
 ### 6.2 GitHub リポジトリのセットアップ
-1. リポジトリの `Settings > Secrets and variables > Actions` に `HF_TOKEN` を登録。
+1. リポジトリの `Settings > Secrets and variables > Actions` に以下を登録：
+   - `HF_TOKEN`: Hugging Face の書き込み用トークン
+   - `JINA_API_KEY`: Jina Reader API のキー（[jina.ai](https://jina.ai/reader/) で取得）
 2. セルフホストランナー（GPU搭載）を接続。
 
 ### 6.3 Google Apps Script & スプレッドシート
