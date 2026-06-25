@@ -67,36 +67,55 @@ yumi-1t-os/
     └── assets/                      # 動画生成用ベース素材
 ```
 
-## 6. セットアップガイド
+## 6. セットアップ詳細ガイド
 
-### 6.1 Hugging Face Hub のセットアップ
-1. Hugging Faceアカウントを作成。
-2. 新しいModelリポジトリを作成（例: `your-username/yumi-250b-os-experts`）。
-3. `Settings > Access Tokens` から Write 権限を持つトークンを作成（これが `HF_TOKEN` になります）。
+### Step 1: Hugging Face Hub の準備
+1. [Hugging Face](https://huggingface.co/) でアカウントを作成。
+2. **新規リポジトリ作成**: `New Model` をクリック。
+   - `Model Name`: `yumi-250b-os-experts` (任意)
+   - `Visibility`: `Public` または `Private`
+3. **アクセストークン発行**: `Settings > Access Tokens` から `New Token` を作成。
+   - `Name`: `YUMI_EVOLUTION`
+   - `Role`: `Write`
+   - 発行された `hf_...` で始まる文字列をコピー（これが `HF_TOKEN` になります）。
 
-### 6.2 初期学習の実行 (Initial Brain Setup)
-YUMIの「最初の脳」を生成するために、以下の手順を実行します。
-1. セルフホストランナー（GPU搭載）を GitHub リポジトリに接続します。
-2. GitHub Actions 画面から `YUMI Initial Training` ワークフローを選択します。
-3. `Run workflow` をクリックし、ベースモデル（例: `meta-llama/Meta-Llama-3-8B`）を入力します。
-4. これにより、25個のエキスパートが自動生成・圧縮され、Hugging Faceへアップロードされます。
+### Step 2: GitHub Secrets の設定
+1. GitHubリポジトリの `Settings > Secrets and variables > Actions` を開く。
+2. `New repository secret` ボタンをクリックし、以下の3つを登録：
+   - `HF_TOKEN`: (Step 1でコピーしたトークン)
+   - `JINA_API_KEY`: [Jina Reader](https://jina.ai/reader/) で発行したAPIキー
+   - `HMAC_SECRET`: 任意のランダムな文字列（例: `yumi-secure-2024-x`）※後でGASにも同じものを設定
 
-### 6.3 GitHub リポジトリのセットアップ
-1. リポジトリの `Settings > Secrets and variables > Actions` に以下を登録：
-   - `HF_TOKEN`: Hugging Face の書き込み用トークン
-   - `JINA_API_KEY`: Jina Reader API のキー（[jina.ai](https://jina.ai/reader/) で取得）
-2. セルフホストランナー（GPU搭載）を接続。
+### Step 3: セルフホストランナーの接続 (GPU環境)
+1. NVIDIA GPU搭載のPCを用意。
+2. リポジトリの `Settings > Actions > Runners` > `New self-hosted runner` をクリック。
+3. 表示されるOS（Linux/Windows）を選択し、記載されているコマンドを順に実行してランナーを起動。
+4. ステータスが `Idle` (緑) になれば準備完了。
 
-### 6.4 Google Apps Script & スプレッドシート
-1. 新規スプレッドシートを作成し、IDをコピー。
-2. `gas_relay/main.gs` を Apps Script エディタに貼り付け。
-3. `プロジェクトの設定 > スクリプト プロパティ` に以下を追加：
-   - `SPREADSHEET_ID`: スプレッドシートのID
-   - `GITHUB_REPO`: `your-username/yumi-1t-os`
-   - `GITHUB_TOKEN`: GitHubのパーソナルアクセストークン
-   - `HMAC_SECRET`: フロントエンドと共通の秘密鍵
-4. ウェブアプリとしてデプロイし、URLを `js/ChatAgent.js` に設定。
-4. 土曜0時に `triggerWeeklyEvolution` が動くようトリガーを設定。
+### Step 4: 初期学習 (Initial Brain Setup)
+1. GitHubリポジトリの `Actions` タブをクリック。
+2. 左メニューから `YUMI Initial Training` を選択。
+3. `Run workflow` をクリック：
+   - `Base model`: `meta-llama/Meta-Llama-3-8B` (または任意)
+4. 完了すると、Hugging Faceのリポジトリに25個の `.gguf` ファイルが生成されます。
+
+### Step 5: Google Apps Script (GAS) の構築
+1. [Googleスプレッドシート](https://sheets.new/) を新規作成。URLの `.../d/ (ここ) /edit` の部分（スプレッドシートID）をコピー。
+2. `拡張機能 > Apps Script` を開く。
+3. `gas_relay/main.gs` の内容を `コード.gs` に貼り付け。
+4. 左メニュー `プロジェクトの設定 (歯車アイコン)` > `スクリプト プロパティ` に以下を追加：
+   - `SPREADSHEET_ID`: (1でコピーしたID)
+   - `GITHUB_REPO`: `あなたのユーザー名/yumi-1t-os`
+   - `GITHUB_TOKEN`: GitHubの `Settings > Developer settings > Personal access tokens (classic)` で作成した `repo` 権限を持つトークン
+   - `HMAC_SECRET`: (Step 2で決めた文字列)
+5. `デプロイ > 新しいデプロイ`：
+   - `種類`: `ウェブアプリ`
+   - `アクセスできるユーザー`: `全員`
+6. 発行された `ウェブアプリのURL` をコピーし、`js/main.js` 内の `YOUR_GAS_URL` を書き換え。
+7. 左メニュー `トリガー (時計アイコン)` > `トリガーを追加`：
+   - `実行する関数`: `triggerWeeklyEvolution`
+   - `イベントのソース`: `時間主導型`
+   - `タイプ`: `週ベースのタイマー` / `土曜日` / `午前0時〜1時`
 
 ### 6.5 強化学習 (RLHF/DPO) の運用
 - チャットUIの評価ボタン（👍/👎）から収集されたデータは、GAS経由で週末にGitHub Actionsへ送られます。
