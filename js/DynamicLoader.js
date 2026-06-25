@@ -7,8 +7,9 @@
 export class DynamicLoader {
     constructor() {
         this.currentExpert = null;
-        this.hfBaseUrl = "https://huggingface.co/your-username/yumi-1t-os-experts/resolve/main/";
+        this.hfBaseUrl = "https://huggingface.co/your-username/yumi-250b-os-experts/resolve/main/";
         this.vramLimit = 10 * 1024 * 1024 * 1024; // 10GB
+        this.numExperts = 25; // 250B構成 (1T相当性能)
     }
 
     /**
