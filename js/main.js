@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function getChatAgent() {
         if (!chatAgentInstance) {
             const { ChatAgent } = await import('./ChatAgent.js');
-            chatAgentInstance = new ChatAgent('YOUR_GAS_URL'); // 実装時に書き換え
+            chatAgentInstance = new ChatAgent();
         }
         return chatAgentInstance;
     }

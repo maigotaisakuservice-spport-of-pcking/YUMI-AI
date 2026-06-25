@@ -4,9 +4,10 @@
  */
 
 export class ChatAgent {
-    constructor(gasUrl) {
-        this.gasUrl = gasUrl;
-        this.secret = "YUMI_SECRET_HMAC_KEY_2024"; // 環境変数での注入を推奨
+    constructor() {
+        // これらの値は GitHub Actions でのデプロイ時に置換される
+        this.gasUrl = "__G_A_S_U_R_L_PLACEHOLDER__";
+        this.secret = "__H_M_A_C_S_E_C_R_E_T_PLACEHOLDER__";
         this.buffer = [];
     }
 
