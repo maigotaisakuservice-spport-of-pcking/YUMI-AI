@@ -71,17 +71,23 @@ yumi-1t-os/
 
 ### 6.1 Hugging Face Hub のセットアップ
 1. Hugging Faceアカウントを作成。
-2. 新しいModelリポジトリを作成（例: `your-username/yumi-1t-os-experts`）。
+2. 新しいModelリポジトリを作成（例: `your-username/yumi-250b-os-experts`）。
 3. `Settings > Access Tokens` から Write 権限を持つトークンを作成（これが `HF_TOKEN` になります）。
-4. エキスパートモデル（10GB GGUF）を100個アップロードします。
 
-### 6.2 GitHub リポジトリのセットアップ
+### 6.2 初期学習の実行 (Initial Brain Setup)
+YUMIの「最初の脳」を生成するために、以下の手順を実行します。
+1. セルフホストランナー（GPU搭載）を GitHub リポジトリに接続します。
+2. GitHub Actions 画面から `YUMI Initial Training` ワークフローを選択します。
+3. `Run workflow` をクリックし、ベースモデル（例: `meta-llama/Meta-Llama-3-8B`）を入力します。
+4. これにより、25個のエキスパートが自動生成・圧縮され、Hugging Faceへアップロードされます。
+
+### 6.3 GitHub リポジトリのセットアップ
 1. リポジトリの `Settings > Secrets and variables > Actions` に以下を登録：
    - `HF_TOKEN`: Hugging Face の書き込み用トークン
    - `JINA_API_KEY`: Jina Reader API のキー（[jina.ai](https://jina.ai/reader/) で取得）
 2. セルフホストランナー（GPU搭載）を接続。
 
-### 6.3 Google Apps Script & スプレッドシート
+### 6.4 Google Apps Script & スプレッドシート
 1. 新規スプレッドシートを作成し、IDをコピー。
 2. `gas_relay/main.gs` を Apps Script エディタに貼り付け。
 3. `プロジェクトの設定 > スクリプト プロパティ` に以下を追加：
@@ -92,7 +98,7 @@ yumi-1t-os/
 4. ウェブアプリとしてデプロイし、URLを `js/ChatAgent.js` に設定。
 4. 土曜0時に `triggerWeeklyEvolution` が動くようトリガーを設定。
 
-### 6.4 強化学習 (RLHF/DPO) の運用
+### 6.5 強化学習 (RLHF/DPO) の運用
 - チャットUIの評価ボタン（👍/👎）から収集されたデータは、GAS経由で週末にGitHub Actionsへ送られます。
 - `train_dpo.py` により、ユーザーの好みに基づいたキャラクター調整と品質向上が自動的に行われます。
 

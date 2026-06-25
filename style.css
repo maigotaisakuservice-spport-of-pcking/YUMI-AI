@@ -137,7 +137,9 @@ header {
     padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 8px;
+    height: 100%;
+    scroll-behavior: smooth;
 }
 
 .system-status {
@@ -163,6 +165,10 @@ header {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    scroll-behavior: smooth;
+    /* スクロールバーを隠すための設定 (任意) */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
 }
 
 .message {

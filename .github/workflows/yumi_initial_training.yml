@@ -1,0 +1,48 @@
+name: YUMI Initial Training
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_model:
+        description: 'Base model name on HF (e.g. llama-3-8b)'
+        required: true
+        default: 'meta-llama/Meta-Llama-3-8B'
+
+jobs:
+  initial-train:
+    runs-on: self-hosted # セルフホストランナーを使用
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install AI Stack
+        run: |
+          pip install torch transformers accelerate peft bitsandbytes
+          # llama.cpp quantization tools
+          git clone https://github.com/ggerganov/llama.cpp
+          cd llama.cpp && make -j && cd ..
+
+      - name: Run Initial Expert Generation
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python src/model/initial_train.py --base_model ${{ github.event.inputs.base_model }}
+
+      - name: Quantize & Compress to 10GB
+        run: |
+          # 25エキスパートを順次 GGUF / imatrix 圧縮
+          for i in {0..24}; do
+            python src/model/compress_to_10gb.py --expert_id $i
+          done
+
+      - name: Upload Initial Brain to HF
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          echo "Uploading 250GB Initial Brain to Hugging Face..."
+          # huggingface-cli upload ...
