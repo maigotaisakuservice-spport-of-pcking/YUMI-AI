@@ -11,24 +11,26 @@ const GITHUB_REPO = scriptProperties.getProperty('GITHUB_REPO');
 const GITHUB_TOKEN = scriptProperties.getProperty('GITHUB_TOKEN');
 
 /**
- * フロントエンドからのPOSTリクエストを受信
+ * フロントエンドからのバッチリクエストを受信
  */
 function doPost(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
-    const { keyword, expert_id, sha_key, timestamp } = data;
+    const payload = JSON.parse(e.postData.contents);
+    const { batch, signature } = payload;
 
-    // バリデーション
-    if (!keyword || !sha_key) {
-      return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Missing data" }))
+    // HMAC署名の検証
+    if (!verifyHmac(JSON.stringify(batch), signature)) {
+      return ContentService.createTextOutput(JSON.stringify({ status: "unauthorized" }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
 
-    // スプレッドシートに追記 (平日の蓄積)
-    sheet.appendRow([timestamp, keyword, expert_id, sha_key]);
+    // バッチデータを一括追記
+    batch.forEach(item => {
+      sheet.appendRow([item.timestamp, item.type, JSON.stringify(item.data)]);
+    });
 
     return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -71,12 +73,14 @@ function triggerWeeklyEvolution() {
 }
 
 /**
- * SHA-256キーの整合性検証 (簡易ロジック例)
+ * HMAC署名の検証
  */
-function verifyShaKey(keyword, timestamp, providedKey) {
-  // ここにフロントエンドと共通の秘密の計算ロジックを実装
-  // 例: SHA256(keyword + secret + date)
-  return true; // 開発時は一旦パス
+function verifyHmac(message, signature) {
+  const secret = scriptProperties.getProperty('HMAC_SECRET');
+  const expected = Utilities.computeHmacSha256Signature(message, secret)
+    .map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2, '0'))
+    .join('');
+  return expected === signature;
 }
 
 /**

@@ -1,73 +1,71 @@
 /**
- * ChatAgent.js
- * 未知概念の検知、SHA-256キー生成、GASへのPOSTを担当
+ * ChatAgent.js (Version 7.5)
+ * ローカルバッファによるバッチ送信とHMAC署名セキュリティ
  */
 
 export class ChatAgent {
     constructor(gasUrl) {
         this.gasUrl = gasUrl;
-        this.secret = "YUMI_EVOLUTION_SECRET_2024"; // 内部検証用シークレット
+        this.secret = "YUMI_SECRET_HMAC_KEY_2024"; // 環境変数での注入を推奨
+        this.buffer = [];
     }
 
     /**
-     * AIの回答から未知の概念が含まれているかチェックし、必要ならGASへ報告
+     * 未知概念や強化学習データをバッファに追加
      */
-    async processResponse(text, currentExpertId) {
-        const unknownKeywords = this.detectUnknownConcepts(text);
+    addMemory(type, data) {
+        const entry = {
+            type, // 'CONCEPT' or 'RL_FEEDBACK'
+            data,
+            timestamp: new Date().toISOString()
+        };
+        this.buffer.push(entry);
+        console.log(`Memory buffered: [${type}]`, data);
 
-        for (const keyword of unknownKeywords) {
-            await this.reportToMemory(keyword, currentExpertId);
+        // バッファが一定数溜まったら自動送信 (GASレート制限対策)
+        if (this.buffer.length >= 5) {
+            this.flushBuffer();
         }
     }
 
     /**
-     * 未知概念の検出ロジック (簡易的な正規表現やキーワードマッチング)
+     * バッファに蓄積されたデータを一括送信
      */
-    detectUnknownConcepts(text) {
-        // 例: 「〜についてはまだ詳しく知られていません」「未知の概念：」などのパターンを検出
-        const pattern = /未知の概念[:：]\s*([^\s、。]+)/g;
-        const matches = [...text.matchAll(pattern)];
-        return matches.map(m => m[1]);
-    }
-
-    /**
-     * GASへデータを送信
-     */
-    async reportToMemory(keyword, expertId) {
-        const timestamp = new Date().toISOString();
-        const shaKey = await this.generateSha256(keyword + this.secret + timestamp);
+    async flushBuffer() {
+        if (this.buffer.length === 0) return;
 
         const payload = {
-            keyword,
-            expert_id: expertId,
-            sha_key: shaKey,
-            timestamp
+            batch: this.buffer,
+            signature: await this.generateHmac(JSON.stringify(this.buffer))
         };
 
         try {
-            const response = await fetch(this.gasUrl, {
+            // 実際はここでも Web Crypto API による暗号化が可能
+            await fetch(this.gasUrl, {
                 method: 'POST',
-                mode: 'no-cors', // GAS Web App の制限
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                mode: 'no-cors',
                 body: JSON.stringify(payload)
             });
-            console.log(`Memory queued: ${keyword}`);
-            // UI上のインジケータを光らせるイベントを発火
-            window.dispatchEvent(new CustomEvent('yumi:memory_queued', { detail: { keyword } }));
+            console.log("Buffer flushed successfully.");
+            this.buffer = []; // クリア
         } catch (error) {
-            console.error('Failed to report memory:', error);
+            console.error("Flush failed:", error);
         }
     }
 
     /**
-     * ブラウザ標準機能でSHA-256ハッシュを生成
+     * HMAC-SHA256署名を生成
      */
-    async generateSha256(message) {
-        const msgBuffer = new TextEncoder().encode(message);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    async generateHmac(message) {
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+            'raw',
+            encoder.encode(this.secret),
+            { name: 'HMAC', hash: 'SHA-256' },
+            false,
+            ['sign']
+        );
+        const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
+        return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 }

@@ -61,11 +61,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatHistory = document.getElementById('chat-history');
 
     if (sendBtn) {
-        sendBtn.addEventListener('click', () => {
+        sendBtn.addEventListener('click', async () => {
             const text = chatInput.value.trim();
             if (text) {
                 appendMessage('user', text);
                 chatInput.value = '';
+
+                // 未知概念検知のトリガー例
+                const agent = await getChatAgent();
+                if (text.includes("?")) {
+                    agent.addMemory('CONCEPT', { keyword: text, expert_id: 0 });
+                }
+
                 // 本来はAIの推論を呼ぶが、ここではモック動作
                 setTimeout(() => {
                     const response = "私はYUMIです。現在は初期セットアップモードで稼働しています。1T-MoEエンジンをロード中...";
@@ -75,11 +82,60 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function appendMessage(role, text) {
+    async function appendMessage(role, text) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${role}`;
-        msgDiv.textContent = sanitizeOutput(text); // サニタイズ適用
+
+        const contentDiv = document.createElement('div');
+        contentDiv.textContent = sanitizeOutput(text);
+        msgDiv.appendChild(contentDiv);
+
+        if (role === 'yumi') {
+            // フィードバックボタンの追加
+            const controls = document.createElement('div');
+            controls.className = 'feedback-controls';
+
+            const upBtn = document.createElement('button');
+            upBtn.className = 'feedback-btn';
+            upBtn.innerHTML = '👍';
+            upBtn.onclick = () => recordFeedback(text, 'good');
+
+            const downBtn = document.createElement('button');
+            downBtn.className = 'feedback-btn';
+            downBtn.innerHTML = '👎';
+            downBtn.onclick = () => recordFeedback(text, 'bad');
+
+            controls.appendChild(upBtn);
+            controls.appendChild(downBtn);
+            msgDiv.appendChild(controls);
+        }
+
         chatHistory.appendChild(msgDiv);
         chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    let chatAgentInstance = null;
+    async function getChatAgent() {
+        if (!chatAgentInstance) {
+            const { ChatAgent } = await import('./ChatAgent.js');
+            chatAgentInstance = new ChatAgent('YOUR_GAS_URL'); // 実装時に書き換え
+        }
+        return chatAgentInstance;
+    }
+
+    async function recordFeedback(aiText, rating) {
+        const agent = await getChatAgent();
+
+        // 最後に送信したユーザーのメッセージを取得
+        const userMessages = document.querySelectorAll('.message.user');
+        const lastUserText = userMessages.length > 0 ? userMessages[userMessages.length - 1].textContent : "";
+
+        agent.addMemory('RL_FEEDBACK', {
+            prompt: lastUserText,
+            response: aiText,
+            rating: rating
+        });
+
+        alert(`Feedback recorded: ${rating}`);
     }
 });

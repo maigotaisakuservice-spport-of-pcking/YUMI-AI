@@ -86,8 +86,13 @@ yumi-1t-os/
    - `SPREADSHEET_ID`: スプレッドシートのID
    - `GITHUB_REPO`: `your-username/yumi-1t-os`
    - `GITHUB_TOKEN`: GitHubのパーソナルアクセストークン
+   - `HMAC_SECRET`: フロントエンドと共通の秘密鍵
 4. ウェブアプリとしてデプロイし、URLを `js/ChatAgent.js` に設定。
 4. 土曜0時に `triggerWeeklyEvolution` が動くようトリガーを設定。
+
+### 6.4 強化学習 (RLHF/DPO) の運用
+- チャットUIの評価ボタン（👍/👎）から収集されたデータは、GAS経由で週末にGitHub Actionsへ送られます。
+- `train_dpo.py` により、ユーザーの好みに基づいたキャラクター調整と品質向上が自動的に行われます。
 
 ## 7. 技術解説
 - **1T-MoE:** WebGPUの制限内で最大の知識量を扱うための「動的エキスパート切替」システム。

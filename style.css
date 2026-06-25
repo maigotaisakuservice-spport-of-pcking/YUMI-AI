@@ -185,6 +185,35 @@ header {
     align-self: flex-end;
 }
 
+.feedback-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.message.yumi:hover .feedback-controls {
+    opacity: 1;
+}
+
+.feedback-btn {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.feedback-btn:hover {
+    background: var(--studio-bg);
+}
+
 .chat-input-area {
     padding: 20px;
     border-top: 1px solid var(--border-color);
