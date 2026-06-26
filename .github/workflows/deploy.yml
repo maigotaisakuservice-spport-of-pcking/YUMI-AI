@@ -1,0 +1,35 @@
+name: Deploy YUMI to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Inject Secrets into Code
+        run: |
+          sed -i "s|__G_A_S_U_R_L_PLACEHOLDER__|${{ secrets.GAS_URL }}|g" js/ChatAgent.js
+          sed -i "s|__H_M_A_C_S_E_C_R_E_T_PLACEHOLDER__|${{ secrets.HMAC_SECRET }}|g" js/ChatAgent.js
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

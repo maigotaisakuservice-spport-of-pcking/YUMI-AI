@@ -1,0 +1,57 @@
+name: YUMI Weekly Evolution
+
+on:
+  workflow_dispatch:
+    inputs:
+      memory_data:
+        description: 'JSON format memory data from GAS'
+        required: true
+
+jobs:
+  evolve:
+    runs-on: self-hosted # 仕様に基づきGPU搭載セルフホストランナーを使用
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install torch beautifulsoup4 requests
+          # llama.cpp等のビルドが必要な場合はここで実行
+
+      - name: Data Collection & Cleaning
+        env:
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
+        run: |
+          python src/data/rss_parser.py --data '${{ github.event.inputs.memory_data }}'
+          # cleanerを実行して学習データを準備
+
+      - name: Q-LoRA Training with Signature
+        run: |
+          python src/model/train_qlora.py
+
+      - name: Compress to GGUF (10GB)
+        run: |
+          python src/model/compress_to_10gb.py --output expert_new.gguf
+
+      - name: Push to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # huggingface-cli を用いてモデルをアップロード
+          echo "Uploading to Hugging Face..."
+
+      - name: Self-Mutation & Validation
+        env:
+          GAS_URL: ${{ secrets.GAS_URL }}
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+        run: |
+          # 必要に応じてスクリプト内で秘密情報を読み込めるように環境変数をセット
+          python src/evolution/sandbox_validator.py
