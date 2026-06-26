@@ -49,5 +49,9 @@ jobs:
           echo "Uploading to Hugging Face..."
 
       - name: Self-Mutation & Validation
+        env:
+          GAS_URL: ${{ secrets.GAS_URL }}
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
         run: |
+          # 必要に応じてスクリプト内で秘密情報を読み込めるように環境変数をセット
           python src/evolution/sandbox_validator.py

@@ -81,10 +81,11 @@ yumi-1t-os/
 
 ### Step 2: GitHub Secrets の設定
 1. GitHubリポジトリの `Settings > Secrets and variables > Actions` を開く。
-2. `New repository secret` ボタンをクリックし、以下の3つを登録：
+2. `New repository secret` ボタンをクリックし、以下の4つを登録：
    - `HF_TOKEN`: (Step 1でコピーしたトークン)
    - `JINA_API_KEY`: [Jina Reader](https://jina.ai/reader/) で発行したAPIキー
-   - `HMAC_SECRET`: 任意のランダムな文字列（例: `yumi-secure-2024-x`）※後でGASにも同じものを設定
+   - `GAS_URL`: デプロイした Google Apps Script のウェブアプリURL
+   - `HMAC_SECRET`: `yumi-secure-aeeru13@sdnuuwnen3139810kapdjABUDENAO18301@samoda;:1[dunskw1i39andnIA19dna` (これをそのままコピー)
 
 ### Step 3: セルフホストランナーの接続 (GPU環境)
 1. NVIDIA GPU搭載のPCを用意。
